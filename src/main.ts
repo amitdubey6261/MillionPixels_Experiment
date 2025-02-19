@@ -1,5 +1,5 @@
 import { Main, PerspectiveCameraAuto } from '@three.ez/main';
-import { AmbientLight, Color, DirectionalLight, IcosahedronGeometry, MeshLambertMaterial, Scene } from 'three';
+import { AmbientLight, Color, DirectionalLight, IcosahedronGeometry, MeshPhysicalMaterial, Scene } from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { InstancedMesh2 } from '@three.ez/instanced-mesh';
 import { PRNG } from './random.js';
@@ -16,11 +16,11 @@ const scene = new Scene();
 scene.continuousRaycasting = true;
 
 const geometry = new IcosahedronGeometry(1 , 5);
-const material = new MeshLambertMaterial();
+const material = new MeshPhysicalMaterial();
 const instancedMesh = new InstancedMesh2(geometry, material);
 
-instancedMesh.addLOD(new IcosahedronGeometry(1, 1), new MeshLambertMaterial({ color: 'white', wireframe: false }), 100);
-instancedMesh.addLOD(new IcosahedronGeometry(1, 0), new MeshLambertMaterial({ color: 'white', wireframe: false }), 50);
+instancedMesh.addLOD(new IcosahedronGeometry(1, 0), new MeshPhysicalMaterial({ color: 'white', wireframe: false }), 100);
+instancedMesh.addLOD(new IcosahedronGeometry(1, 1), new MeshPhysicalMaterial({ color: 'white', wireframe: false }), 50);
 
 
 instancedMesh.addInstances(count, (object) => {
