@@ -14,6 +14,8 @@
     "vite": "^6.1.0"
   },
   "dependencies": {
+    "@three.ez/instanced-mesh": "^0.3.0-alpha.9",
+    "@three.ez/main": "^0.5.9",
     "three": "^0.173.0"
   }
 }

@@ -1,98 +1,57 @@
-import * as THREE from 'three' ; 
+import { Main, PerspectiveCameraAuto } from '@three.ez/main';
+import { AmbientLight, Color, DirectionalLight, IcosahedronGeometry, MeshLambertMaterial, Scene } from 'three';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import { InstancedMesh2 } from '@three.ez/instanced-mesh';
+import { PRNG } from './random.js';
 import './style.css'
-import { OrbitControls} from 'three/examples/jsm/Addons.js';
-import Stats from 'three/examples/jsm/libs/stats.module.js';
-import { WebGPURenderer } from 'three/webgpu';
 
-let scene : THREE.Scene ; 
-let camera : THREE.PerspectiveCamera ; 
-let renderer : WebGPURenderer ; 
-let oControls : OrbitControls ; 
-let stats : Stats ; 
+const count = 1000000
+const spawnRange = 5000;
 
-const c_scene = () =>{
-  scene = new THREE.Scene() ;
-  stats = new Stats() ; 
-  document.body.appendChild(stats.dom)
+const main = new Main();
+const random = new PRNG(count);
+const white = new Color('white');
+const camera = new PerspectiveCameraAuto(70, 0.1, 500).translateZ(100).translateY(20);
+const scene = new Scene();
+scene.continuousRaycasting = true;
 
-  // const geometry = new THREE.IcosahedronGeometry(1  , 0) ; 
-  // const material = new THREE.MeshBasicMaterial({wireframe : true}) ; 
+const geometry = new IcosahedronGeometry(1 , 5);
+const material = new MeshLambertMaterial();
+const instancedMesh = new InstancedMesh2(geometry, material);
 
-  // scene.add(new THREE.Mesh(geometry , material)) ; 
-
-  c_Objects();  
-}
-
-const c_Objects = () =>{
-  const count = 1000000 ; 
-  const color = new THREE.Color();
-  // const geometry = new THREE.SphereGeometry(.3 , 8 , 6 ) ; 
-  const geometry = new THREE.IcosahedronGeometry( 1 , 0 ) ; 
-  const material = new THREE.MeshPhysicalMaterial({wireframe : false});   
-
-  const instancedMesh = new THREE.InstancedMesh(geometry , material , count)
+instancedMesh.addLOD(new IcosahedronGeometry(1, 1), new MeshLambertMaterial({ color: 'white', wireframe: false }), 100);
+instancedMesh.addLOD(new IcosahedronGeometry(1, 0), new MeshLambertMaterial({ color: 'white', wireframe: false }), 50);
 
 
-  const amount = 100;
-  const spacing = 5 ; 
+instancedMesh.addInstances(count, (object) => {
+    object.color = 'white';
+});
 
-  let i = 0;
-  const offset = ( amount - 1 ) / 2;
+instancedMesh.updateInstances((object) => {
+    object.position.x = random.range(-spawnRange, spawnRange);
+    object.position.y = 0;
+    object.position.z = random.range(-spawnRange, spawnRange);
+});
 
-  const matrix = new THREE.Matrix4();
 
-  for ( let x = 0; x < amount; x ++ ) {
+instancedMesh.computeBVH();
 
-    for ( let y = 0; y < amount; y ++ ) {
+instancedMesh.on('pointerintersection', (e) => {
+    const id = e.intersection.instanceId;
 
-      for ( let z = 0; z < amount; z ++ ) {
-
-        matrix.setPosition( (offset - x)*spacing, (offset - y)*spacing, (offset - z )*spacing);
-
-        instancedMesh.setMatrixAt( i, matrix );
-        instancedMesh.setColorAt( i, color );
-
-        i ++;
-
-      }
-
+    if (instancedMesh.getColorAt(id).equals(white)) {
+        instancedMesh.setColorAt(id, random.next() * 0xffffff);
     }
+});
 
-  }
+instancedMesh.raycastOnlyFrustum = true;
 
-  scene.add(instancedMesh) ; 
-}
+const dirLight = new DirectionalLight();
+camera.add(dirLight);
 
-const c_camera = () =>{
-  camera = new THREE.PerspectiveCamera(60 , window.innerWidth/window.innerHeight , .5 , 10000 ) ; 
-  camera.position.set( 0 , 0 , -50 ) ; 
-  scene.add(camera) ; 
-}
+scene.add(instancedMesh, new AmbientLight());
 
-const c_renderer = () =>{
-  renderer = new WebGPURenderer({antialias : false}) ; 
-  renderer.setSize(window.innerWidth , window.innerHeight); 
-  oControls = new OrbitControls(camera , renderer.domElement ); 
+const controls = new OrbitControls(camera, main.renderer.domElement);
+controls.autoRotate = true;
 
-  scene.add( new THREE.AmbientLight(0xffffff , 1));
-
-  document.body.appendChild(renderer.domElement);
-}
-
-const animate = () =>{
-
-  renderer.render(scene , camera ); 
-
-  stats.update()
-
-  window.requestAnimationFrame(animate); 
-}
-
-const _init = () => {
-  c_scene() ; 
-  c_camera();
-  c_renderer();
-  animate(); 
-}
-
-_init() ; 
+main.createView({ scene, camera, backgroundColor: 'white' });
