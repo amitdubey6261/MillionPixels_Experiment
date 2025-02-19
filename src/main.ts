@@ -37,9 +37,12 @@ instancedMesh.updateInstances((object) => {
 instancedMesh.computeBVH();
 
 instancedMesh.on('pointerintersection', (e) => {
+    //@ts-ignore
     const id = e.intersection.instanceId;
 
+    //@ts-ignore
     if (instancedMesh.getColorAt(id).equals(white)) {
+        //@ts-ignore
         instancedMesh.setColorAt(id, random.next() * 0xffffff);
     }
 });
